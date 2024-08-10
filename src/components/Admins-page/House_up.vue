@@ -230,7 +230,7 @@ export default {
       categorys: [],
     };
   },
-
+  //ttttttt
   created() {
     this.fetchcategorys();
   },
