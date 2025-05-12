@@ -1,120 +1,115 @@
 <template>
-  <div>
-    <!-- import Appbar from components -->
-    <Appbar />
-    <Navbar />
+  <LayoutPage>
+    <div>
 
-    <!-- import slideshow form components -->
-    <Slideshow />
+      <!-- slideshow_components -->
+      <div>
+        <Slideshow />
+      </div>
 
-    <marquee behavior="scrool" direction="left" class="style"
-      >ຂາຍໂມດິວແບບເຮືອນ ອອກແບບສະຖາປັດຕະຍະກໍາ ຕົບແຕ່ງພາຍໃນ ແລະ
-      ພ້ອມຮັບເມົາກໍ້ສ້າງອາຄານຕາມໃຈທີ່ທ່ານມັກ
-    </marquee>
+      <marquee behavior="scroll" direction="left" class="style">
+        {{ $t("marqueeText") }}
+      </marquee>
 
-    <!-- All products -->
-    <v-container fluid>
-      <v-card class="back-image">
+      <!-- All products -->
+
+      <v-container fluid>
         <v-card-text id="services">
-          <!-- products -->
           <div>
             <v-row id="0000">
-              <!-- <h3>ເຮືອນສອງຊັ້ນ</h3> -->
               <huose_Products0 />
             </v-row>
           </div>
           <br />
           <v-cols cols="12" sm="6" ref="house" class="about-me small-card">
-            <h2>ເຮືອນມາດຕະຖານ ແລະ ມີຄຸນນະພາບດີ ພ້ອມອອກແບບຕາມຫຼັກຮຸ່ງຈອຍ</h2>
-            <p>
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Ratione
-              aliquam itaque ea eius eos consequuntur nam deserunt unde est
-              dignissimos?
-            </p>
+            <h2>{{ $t("houseDesignTitle") }}</h2>
+            <p>{{ $t("houseDesignDescription") }}</p>
           </v-cols>
           <br /><br />
           <v-row id="1111">
             <v-col>
-              <!-- <h3>ເຮືອນສອງຊັ້ນ</h3> -->
               <Products11 />
             </v-col>
           </v-row>
-
+          <v-col cols="12" sm="6" class="text-center">
+            <div class="myvideos">
+              <video autoplay muted style="width: 100%; height: 100%">
+                <source src="/myvideo.mp4" type="video/mp4" cover />
+              </video>
+            </div>
+            <br />
+            <p>{{ $t("videoDescription") }}</p>
+          </v-col>
           <v-row id="2222">
-            <!-- <h3>ເຮືອນຫຼູບ</h3> -->
             <Products22 />
           </v-row>
         </v-card-text>
+      </v-container>
+
+      <hr />
+
+      <v-card id="work">
+        <Testing />
       </v-card>
-    </v-container>
-    <hr />
-    <!-- import folder testing from comp -->
-    <v-card id="work">
-      <Testing />
-    </v-card>
 
-    <!-- contact  -->
-    <div ref="aboutMe" class="about-me">
-      <v-col cols="12" sm="12" class="px-16" id="contact">
-        <v-row>
-          <v-col cols="12" sm="4">
-            <div class="child">
-              <h1>Contact info.</h1>
-              <v-btn
-                icon="mdi-map-marker"
-                color="#4CAF50"
-                class="mt-10"
-                variant="outlined"
-              ></v-btn
-              ><br />
-              <span class="text-caption">13 raod, Noth Ban phulackchalean </span
-              ><br />
-              <v-btn
-                icon="mdi-phone"
-                color="#4CAF50"
-                class="mt-10"
-                variant="outlined"
-              ></v-btn
-              ><br />
-              <span class="text-caption">020-2874-2080 </span> <br />
-              <span class="text-caption">020-7724-4616 </span> <br />
-              <v-btn
-                icon="mdi-email"
-                color="#4CAF50"
-                class="mt-10"
-                variant="outlined"
-              ></v-btn
-              ><br />
-              <span class="text-caption">vasengchuoyee@gmail.com </span>
-            </div>
-          </v-col>
+      <!-- contact -->
+      <div ref="aboutMe" class="about-me">
+        <v-col cols="12" sm="12" class="px-16" id="contact">
+          <v-row>
+            <v-col cols="12" sm="4">
+              <div class="child">
+                <h1>{{ $t("contactTitle") }}</h1>
+                <v-btn
+                  icon="mdi-map-marker"
+                  color="#4CAF50"
+                  class="mt-10"
+                  variant="outlined"
+                ></v-btn>
+                <br />
+                <span class="text-caption">{{ $t("address") }}</span>
+                <br />
+                <v-btn
+                  icon="mdi-phone"
+                  color="#4CAF50"
+                  class="mt-10"
+                  variant="outlined"
+                ></v-btn>
+                <br />
+                <span class="text-caption">{{ $t("phone1") }}</span>
+                <br />
+                <span class="text-caption">{{ $t("phone2") }}</span>
+                <br />
+                <v-btn
+                  icon="mdi-email"
+                  color="#4CAF50"
+                  class="mt-10"
+                  variant="outlined"
+                ></v-btn>
+                <br />
+                <span class="text-caption">{{ $t("email") }}</span>
+              </div>
+            </v-col>
+            <v-col cols="12" sm="8">
+              <sending />
+            </v-col>
+          </v-row>
+        </v-col>
+      </div>
 
-          <v-col cols="12" sm="8">
-            <!-- test -->
-            <sending />
-          </v-col>
-        </v-row>
-      </v-col>
+      <!-- button go back to the top -->
+      <goback />
     </div>
-
-    <!-- footer -->
-    <div id="footer">
-      <Footer />
-    </div>
-
-    <!-- button go back to the top -->
-    <goback />
-  </div>
+  </LayoutPage>
 </template>
 
 <script>
 import { defineComponent } from "vue";
+import i18n from "../i18n/i18n"; // Import i18n configuration
 
+import LayoutPage from "../layouts/LayoutPage.vue";
 // Components
-import Appbar from "../components/Appbar.vue";
-import Navbar from "../components/Navbar.vue";
+
 import Slideshow from "../components/Slideshow.vue";
-import Footer from "../components/Footer.vue";
 import Testing from "../components/Testing.vue";
 import Products11 from "../components/products/Products11.vue";
 import Products22 from "../components/products/Products22.vue";
@@ -172,26 +167,14 @@ export default defineComponent({
   },
 
   components: {
-    Appbar,
-    Navbar,
     Slideshow,
-    Footer,
     Testing,
     Products11,
     Products22,
     sending,
     huose_Products0,
     goback,
+    LayoutPage,
   },
 });
 </script>
-
-<style scoped>
-.back-image {
-  /* background-image: url('mode-bground.jpg'); */
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-</style>
-
-<!-- https://vasengowner.web.app -->

@@ -11,8 +11,6 @@
 
 <script>
 import Chart from 'chart.js/auto';
-// Import Utils if it's defined in an external module
-// import Utils from './utils';
 
 export default {
   data() {
