@@ -81,12 +81,14 @@
               required
             ></v-autocomplete>
           </v-card-text>
-          <v-card-actions class="form-btn" >
-            <v-btn variant="text" @click="resetForm" class="clear"> ຍົກເລີກ </v-btn>
+          <v-card-actions class="form-btn">
+            <v-btn variant="text" @click="resetForm" class="clear">
+              ຍົກເລີກ
+            </v-btn>
 
             <v-btn class="submits" variant="text" @click="submit">
               <v-icon>mdi-database-plus</v-icon>
-              
+
               ເພີ່ມ
             </v-btn>
           </v-card-actions>
@@ -110,7 +112,7 @@ import axios from "axios";
 export default {
   data() {
     return {
-      positions: ["Designer", "Graphic Designer", "Developer", "Saler"],
+      positions: ["Admin", "Designer"],
       errorMessages: "",
       firstName: null,
       lastName: null,
@@ -148,13 +150,6 @@ export default {
 
   methods: {
     resetForm() {
-      this.errorMessages = "";
-      this.formHasErrors = false;
-
-      Object.keys(this.form).forEach((f) => {
-        this.$refs[f] && this.$refs[f].reset();
-      });
-
       this.firstName = null;
       this.lastName = null;
       this.address = null;
@@ -163,43 +158,99 @@ export default {
       this.password = null;
       this.datebth = null;
       this.position = null;
+      this.formHasErrors = false;
+      this.errorMessages = "";
+
+      // Reset validation on all form fields
+      Object.keys(this.form).forEach((f) => {
+        if (this.$refs[f]) {
+          this.$refs[f].reset();
+        }
+      });
     },
+    getAuthToken() {
+      return localStorage.getItem("token");
+    },
+
     async submit() {
-  this.formHasErrors = false;
+      this.formHasErrors = false;
 
-  Object.keys(this.form).forEach((f) => {
-    if (!this.form[f]) this.formHasErrors = true;
-    this.$refs[f] && this.$refs[f].validate(true);
-  });
+      Object.keys(this.form).forEach((f) => {
+        if (!this.form[f]) this.formHasErrors = true;
+        this.$refs[f] && this.$refs[f].validate(true);
+      });
 
-  if (this.formHasErrors) {
-    console.log("Form has errors:", this.form);
-    return;
-  }
+      if (this.formHasErrors) {
+        console.log("Form has errors:", this.form);
+        return;
+      }
 
-  try {
-    console.log("Submitting form:", this.form);
-    const response = await axios.post("http://localhost:3000/api/employee", this.form);
-    console.log("Response from server:", response);
-    this.resetForm();
-    this.snackbarMessage = "Employee added successfully!";
-    this.snackbar = true;
-    this.fetchData();
-  } catch (error) {
-    console.error("Error adding employee:", error.response ? error.response.data : error.message);
-    this.snackbarMessage = "Failed to add employee. Please try again.";
-    this.snackbar = true;
-  }
-},
+      try {
+        const token = this.getAuthToken();
+        if (!token) {
+          this.$router.push("/");
+          return;
+        }
+
+        console.log("Submitting form:", this.form);
+        const response = await axios.post(
+          "http://localhost:3000/api/employee",
+          this.form,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        console.log("Response from server:", response);
+        this.resetForm();
+        this.snackbarMessage = "Employee added successfully!";
+        this.snackbar = true;
+        this.fetchData();
+      } catch (error) {
+        console.error("Error adding employee:", error);
+        if (error.response?.status === 401) {
+          this.snackbarMessage = "Session expired. Please login again.";
+          this.$router.push("/");
+        } else {
+          this.snackbarMessage = "Failed to add employee. Please try again.";
+        }
+        this.snackbar = true;
+      }
+    },
 
     async fetchData() {
       try {
-        const response = await axios.get("http://localhost:3000/api/employee");
-        this.employees = response.data; // Update the employees array with fetched data
+        const token = this.getAuthToken();
+        if (!token) {
+          this.$router.push("/");
+          return;
+        }
+
+        const response = await axios.get("http://localhost:3000/api/employee", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        this.employees = response.data;
       } catch (error) {
         console.error("Error fetching data:", error);
+        if (error.response?.status === 401) {
+          this.$router.push("/");
+        }
       }
     },
+  },
+
+  created() {
+    const token = this.getAuthToken();
+    if (!token) {
+      this.$router.push("/");
+      return;
+    }
+    this.fetchData();
   },
 };
 </script>
@@ -226,6 +277,5 @@ export default {
   display: flex;
   padding: 6px;
   justify-content: space-around;
-
 }
 </style>

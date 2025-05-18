@@ -55,14 +55,14 @@
                   <v-list-item @click="openEditDialog(item.id)">
                     <v-list-item-icon>
                       <v-icon class="color-hovers">mdi-pencil-circle</v-icon>
+                      Edit
                     </v-list-item-icon>
-                    <v-list-item-title>Edit</v-list-item-title>
                   </v-list-item>
                   <v-list-item @click="openDeleteDialog(item.id)">
                     <v-list-item-icon>
                       <v-icon class="color-hovers">mdi-delete</v-icon>
+                      Delete
                     </v-list-item-icon>
-                    <v-list-item-title>Delete</v-list-item-title>
                   </v-list-item>
                 </v-list>
               </v-menu>
@@ -252,5 +252,58 @@ export default {
 
 .search-field {
   max-width: 400px;
+}
+
+.v-list {
+  padding: 4px;
+  min-width: 150px;
+  border-radius: 8px;
+}
+
+.v-list-item {
+  margin: 4px 0;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.v-list-item:hover {
+  background-color: #f5f5f5;
+  transform: translateX(4px);
+}
+
+.v-list-item-title {
+  font-size: 14px;
+  margin-left: 8px;
+  color: #424242;
+}
+
+.color-hovers {
+  font-size: 20px;
+  margin-right: 8px;
+  transition: color 0.3s ease;
+}
+
+.v-list-item:hover .color-hovers {
+  color: #1976d2;
+}
+
+/* Edit button specific styles */
+.v-list-item:nth-child(1) .color-hovers {
+  color: #4caf50;
+}
+
+/* Delete button specific styles */
+.v-list-item:nth-child(2) .color-hovers {
+  color: #f44336;
+}
+
+/* Add animation for menu appearance */
+.v-menu__content {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.v-menu__content.menuable__content__active {
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>

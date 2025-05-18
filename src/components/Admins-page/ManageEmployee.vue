@@ -19,7 +19,6 @@
 
     <v-table height="auto">
       <thead class="bg-orange">
-        <span>total: {{ filteredData.length }}</span>
         <tr>
           <th class="text-left">No.</th>
           <th class="text-left">First Name</th>
@@ -44,28 +43,24 @@
             <div class="text-center">
               <v-menu offset-y>
                 <template v-slot:activator="{ props }">
-                  <v-btn
-                    v-bind="props"
-                    icon
-                    small
-                  >
+                  <v-btn v-bind="props" icon small>
                     <v-icon color="red">mdi-pencil</v-icon>
                   </v-btn>
                 </template>
+
                 <v-list>
                   <v-list-item @click="openEditDialog(item)">
-                    <v-list-item-icon>
                       <v-icon class="color-hovers">mdi-pencil-circle</v-icon>
-                    </v-list-item-icon>
-                    <v-list-item-title>Edit</v-list-item-title>
+                      Edit
+                    <!-- <v-list-item-title></v-list-item-title> -->
                   </v-list-item>
                   <v-list-item @click="openDeleteDialog(item.id)">
-                    <v-list-item-icon>
                       <v-icon class="color-hovers">mdi-delete</v-icon>
-                    </v-list-item-icon>
-                    <v-list-item-title>Delete</v-list-item-title>
-                  </v-list-item>
+                      Delete
+                    </v-list-item>
+                    <!-- <v-list-item-title></v-list-item-title> -->
                 </v-list>
+
               </v-menu>
             </div>
           </td>
@@ -134,11 +129,15 @@
     <v-dialog v-model="dialogDelete" max-width="500" persistent>
       <v-card>
         <v-card-title class="headline">Confirm Deletion</v-card-title>
-        <v-card-text>Are you sure you want to delete this employee?</v-card-text>
+        <v-card-text
+          >Are you sure you want to delete this employee?</v-card-text
+        >
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="grey" @click="dialogDelete = false">No</v-btn>
-          <v-btn color="red" :loading="deleting" @click="confirmDelete">Yes</v-btn>
+          <v-btn color="red" :loading="deleting" @click="confirmDelete"
+            >Yes</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -170,14 +169,14 @@ export default {
         lastName: "",
         email: "",
         address: "",
-        position: ""
+        position: "",
       },
       isEditMode: false,
       editEmployeeId: null,
       itemToDelete: null,
       snackbar: false,
       snackbarMessage: "",
-      snackbarColor: "success"
+      snackbarColor: "success",
     };
   },
   created() {
@@ -196,7 +195,7 @@ export default {
       );
       this.$emit("update-total-employees", filtered.length); // Emit filtered total
       return filtered;
-    }
+    },
   },
   methods: {
     checkAuthAndFetch() {
@@ -222,8 +221,8 @@ export default {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (!response.ok) {
@@ -240,6 +239,7 @@ export default {
       }
     },
 
+        // Update the saveEmployee method
     async saveEmployee() {
       if (!this.$refs.form.validate()) {
         this.showSnackbar("Please fill all required fields correctly", "error");
@@ -253,46 +253,58 @@ export default {
         return;
       }
 
-      const url = this.isEditMode
-        ? `http://localhost:3000/api/employee/${this.editEmployeeId}`
-        : "http://localhost:3000/api/employee";
-
       try {
+        const url = this.isEditMode
+          ? `http://localhost:3000/api/employee/${this.editEmployeeId}`
+          : "http://localhost:3000/api/employee";
+
+        // Create payload
+        const payload = {
+          firstName: this.employeeForm.firstName.trim(),
+          lastName: this.employeeForm.lastName.trim(),
+          email: this.employeeForm.email.trim(),
+          address: this.employeeForm.address?.trim() || "",
+          position: this.employeeForm.position?.trim() || ""
+        };
+
+        console.log('Request URL:', url);
+        console.log('Request Payload:', payload);
+        console.log('Request Method:', this.isEditMode ? 'PUT' : 'POST');
+
         const response = await fetch(url, {
           method: this.isEditMode ? "PUT" : "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify({
-            id: this.isEditMode ? this.editEmployeeId : undefined,
-            firstName: this.employeeForm.firstName,
-            lastName: this.employeeForm.lastName,
-            email: this.employeeForm.email,
-            address: this.employeeForm.address || "",
-            position: this.employeeForm.position || ""
-          })
+          body: JSON.stringify(payload)
         });
 
+        const data = await response.json();
+        console.log('Server Response:', data);
+
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+          throw new Error(data.message || data.error || 'Server error occurred');
         }
 
-        await response.json();
         this.showSnackbar(
           this.isEditMode ? "Employee updated successfully" : "Employee added successfully",
           "success"
         );
-        this.fetchData();
+        await this.fetchData();
         this.closeDialog();
       } catch (error) {
-        this.handleError(error, "Error saving employee");
+        console.error("Save employee error:", error);
+        this.showSnackbar(
+          `Failed to ${this.isEditMode ? "update" : "add"} employee: ${error.message}`,
+          "error"
+        );
       } finally {
         this.saving = false;
       }
     },
 
+    // Update the confirmDelete method
     async confirmDelete() {
       this.deleting = true;
       const token = localStorage.getItem("token");
@@ -302,7 +314,10 @@ export default {
       }
 
       try {
-        const response = await fetch(`http://localhost:3000/api/employee/${this.itemToDelete}`, {
+        const url = `http://localhost:3000/api/employee/${this.itemToDelete}`;
+        console.log('Delete Request URL:', url);
+
+        const response = await fetch(url, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -310,9 +325,175 @@ export default {
           }
         });
 
+        const data = await response.json();
+        console.log('Delete Response:', data);
+
+        if (!response.ok) {
+          throw new Error(data.message || data.error || `Failed to delete employee (${response.status})`);
+        }
+
+        this.showSnackbar("Employee deleted successfully", "success");
+        await this.fetchData();
+        this.dialogDelete = false;
+        this.itemToDelete = null;
+      } catch (error) {
+        console.error("Delete error:", error);
+        this.showSnackbar(`Error deleting employee: ${error.message}`, "error");
+      } finally {
+        this.deleting = false;
+      }
+    },
+
+    // async saveEmployee() {
+    //   if (!this.$refs.form.validate()) {
+    //     this.showSnackbar("Please fill all required fields correctly", "error");
+    //     return;
+    //   }
+
+    //   this.saving = true;
+    //   const token = localStorage.getItem("token");
+    //   if (!token) {
+    //     this.$router.push("/");
+    //     return;
+    //   }
+
+    //   try {
+    //     const url = this.isEditMode
+    //       ? `http://localhost:3000/api/employee/${this.editEmployeeId}`
+    //       : "http://localhost:3000/api/employee";
+
+    //     // Prepare the request payload
+    //     const payload = {
+    //       firstName: this.employeeForm.firstName,
+    //       lastName: this.employeeForm.lastName,
+    //       email: this.employeeForm.email,
+    //       address: this.employeeForm.address || "",
+    //       position: this.employeeForm.position || "",
+    //     };
+
+    //     // If editing, remove any undefined or null values
+    //     if (this.isEditMode) {
+    //       Object.keys(payload).forEach((key) =>
+    //         payload[key] === undefined || payload[key] === null
+    //           ? delete payload[key]
+    //           : {}
+    //       );
+    //     }
+
+    //     const response = await fetch(url, {
+    //       method: this.isEditMode ? "PUT" : "POST",
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //         Authorization: `Bearer ${token}`,
+    //       },
+    //       body: JSON.stringify(payload),
+    //     });
+
+    //     const data = await response.json();
+
+    //     if (!response.ok) {
+    //       throw new Error(data.message || `Error: ${response.statusText}`);
+    //     }
+
+    //     this.showSnackbar(
+    //       this.isEditMode
+    //         ? "Employee updated successfully"
+    //         : "Employee added successfully",
+    //       "success"
+    //     );
+    //     await this.fetchData();
+    //     this.closeDialog();
+    //   } catch (error) {
+    //     console.error("Save employee error:", error);
+    //     this.showSnackbar(
+    //       `Failed to ${this.isEditMode ? "update" : "add"} employee: ${
+    //         error.message
+    //       }`,
+    //       "error"
+    //     );
+    //   } finally {
+    //     this.saving = false;
+    //   }
+    // },
+
+    // async saveEmployee() {
+    //   if (!this.$refs.form.validate()) {
+    //     this.showSnackbar("Please fill all required fields correctly", "error");
+    //     return;
+    //   }
+
+    //   this.saving = true;
+    //   const token = localStorage.getItem("token");
+    //   if (!token) {
+    //     this.$router.push("/login");
+    //     return;
+    //   }
+
+    //   const url = this.isEditMode
+    //     ? `http://localhost:3000/api/employee/${this.editEmployeeId}`
+    //     : "http://localhost:3000/api/employee";
+
+    //   try {
+    //     const response = await fetch(url, {
+    //       method: this.isEditMode ? "PUT" : "POST",
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //         Authorization: `Bearer ${token}`
+    //       },
+    //       body: JSON.stringify({
+    //         id: this.isEditMode ? this.editEmployeeId : undefined,
+    //         firstName: this.employeeForm.firstName,
+    //         lastName: this.employeeForm.lastName,
+    //         email: this.employeeForm.email,
+    //         address: this.employeeForm.address || "",
+    //         position: this.employeeForm.position || ""
+    //       })
+    //     });
+
+    //     if (!response.ok) {
+    //       const errorData = await response.json();
+    //       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    //     }
+
+    //     await response.json();
+    //     this.showSnackbar(
+    //       this.isEditMode ? "Employee updated successfully" : "Employee added successfully",
+    //       "success"
+    //     );
+    //     this.fetchData();
+    //     this.closeDialog();
+    //   } catch (error) {
+    //     this.handleError(error, "Error saving employee");
+    //   } finally {
+    //     this.saving = false;
+    //   }
+    // },
+
+    async confirmDelete() {
+      this.deleting = true;
+      const token = localStorage.getItem("token");
+      if (!token) {
+        this.$router.push("/");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `http://localhost:3000/api/employee/${this.itemToDelete}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+          throw new Error(
+            errorData.message || `HTTP error! status: ${response.status}`
+          );
         }
 
         this.showSnackbar("Employee deleted successfully", "success");
@@ -331,7 +512,7 @@ export default {
       return new Date(dateString).toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
-        day: "numeric"
+        day: "numeric",
       });
     },
 
@@ -359,7 +540,7 @@ export default {
         lastName: "",
         email: "",
         address: "",
-        position: ""
+        position: "",
       };
       this.isEditMode = false;
       this.editEmployeeId = null;
@@ -377,8 +558,8 @@ export default {
     handleError(error, defaultMessage) {
       console.error(error);
       this.showSnackbar(error.message || defaultMessage, "error");
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -399,5 +580,58 @@ a {
 
 .color-hovers:hover {
   color: #1976d2;
+}
+
+.v-list {
+  padding: 4px;
+  min-width: 150px;
+  border-radius: 8px;
+}
+
+.v-list-item {
+  margin: 4px 0;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.v-list-item:hover {
+  background-color: #f5f5f5;
+  transform: translateX(4px);
+}
+
+.v-list-item-title {
+  font-size: 14px;
+  margin-left: 8px;
+  color: #424242;
+}
+
+.color-hovers {
+  font-size: 20px;
+  margin-right: 8px;
+  transition: color 0.3s ease;
+}
+
+.v-list-item:hover .color-hovers {
+  color: #1976d2;
+}
+
+/* Edit button specific styles */
+.v-list-item:nth-child(1) .color-hovers {
+  color: #4caf50;
+}
+
+/* Delete button specific styles */
+.v-list-item:nth-child(2) .color-hovers {
+  color: #f44336;
+}
+
+/* Add animation for menu appearance */
+.v-menu__content {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.v-menu__content.menuable__content__active {
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>

@@ -1,5 +1,6 @@
 <template>
   <div id="app" class="container">
+    <h4>ກວດສອບ ແລະ ຢືນຢັນລາຍການ</h4>
     <table>
       <thead>
         <tr>
@@ -60,21 +61,43 @@ export default {
     return {
       orders: [],
       loading: false,
-      error: null
+      error: null,
+      api: null
     };
-  },
-  
-  created() {
-    this.fetchOrders();
   },
 
   methods: {
-    getStatusClass(status) {
-      return {
-        'status-pending': status === 'pending',
-        'status-confirmed': status === 'confirmed',
-        'status-rejected': status === 'rejected'
+    initializeAxios() {
+      const token = localStorage.getItem('token');
+      // Remove quotes and clean token
+      const cleanToken = token ? token.replace(/['"]+/g, '').trim() : null;
+      
+      if (!cleanToken) {
+        this.handleAuthError();
+        return null;
       }
+
+      const api = axios.create({
+        baseURL: 'http://localhost:3000/api',
+        timeout: 5000,
+        headers: {
+          'Authorization': `Bearer ${cleanToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Add response interceptor
+      api.interceptors.response.use(
+        response => response,
+        error => {
+          if (error.response?.status === 401) {
+            this.handleAuthError();
+          }
+          return Promise.reject(error);
+        }
+      );
+
+      return api;
     },
 
     async fetchOrders() {
@@ -82,42 +105,21 @@ export default {
       this.error = null;
       
       try {
-        const token = localStorage.getItem('token');
-        
-        // Check if token exists
-        if (!token) {
-          this.error = 'Not authenticated. Please login again.';
-          return;
-        }
+        this.api = this.initializeAxios();
+        if (!this.api) return;
 
-        const response = await axios.get('http://localhost:3000/api/order', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        console.log('Fetching orders with token:', this.api.defaults.headers['Authorization']);
+        const response = await this.api.get('/order');
         
-        if (response.data && response.data.data) {
+        if (response.data?.data) {
           this.orders = response.data.data;
+        } else {
+          console.error('Invalid response format:', response.data);
+          throw new Error('Invalid response format');
         }
       } catch (error) {
         console.error('Error fetching orders:', error);
-        if (error.response) {
-          // Handle specific error cases
-          switch (error.response.status) {
-            case 401:
-              this.error = 'Session expired. Please login again.';
-              localStorage.removeItem('token'); // Clear invalid token
-              break;
-            case 403:
-              this.error = 'You do not have permission to view orders.';
-              break;
-            default:
-              this.error = 'Failed to load orders. Please try again later.';
-          }
-        } else {
-          this.error = 'Network error. Please check your connection.';
-        }
+        this.error = 'Failed to load orders. Please try again.';
       } finally {
         this.loading = false;
       }
@@ -125,26 +127,16 @@ export default {
 
     async confirmOrder(orderId) {
       try {
-        const token = localStorage.getItem("token");
-        await axios.put(
-          `http://localhost:3000/api/order/approved-rejected/${orderId}`,
-          { status: "approved" },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        if (!this.api) this.api = this.initializeAxios();
+        if (!this.api) return;
 
-        // Update the local order status directly
-        const orderIndex = this.orders.findIndex(
-          (order) => order.id === orderId
-        );
+        await this.api.put(`/order/approved-rejected/${orderId}`, { status: "approved" });
+        
+        const orderIndex = this.orders.findIndex(order => order.id === orderId);
         if (orderIndex !== -1) {
-          this.orders[orderIndex].status = "approved"; 
+          this.orders[orderIndex].status = "approved";
         }
-
+        
         this.$emit("order-status-updated");
         alert("Order approved successfully!");
       } catch (error) {
@@ -154,36 +146,44 @@ export default {
     },
 
     async rejectOrder(orderId) {
-      if (confirm("Are you sure you want to reject this order?")) {
-        try {
-          const token = localStorage.getItem("token");
-          await axios.put(
-            `http://localhost:3000/api/order/approved-rejected/${orderId}`,
-            { status: "rejected" },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
+      if (!confirm("Are you sure you want to reject this order?")) return;
+      
+      try {
+        if (!this.api) this.api = this.initializeAxios();
+        if (!this.api) return;
 
-          // Update the local order status directly
-          const orderIndex = this.orders.findIndex(
-            (order) => order.id === orderId
-          );
-          if (orderIndex !== -1) {
-            this.orders[orderIndex].status = "rejected"; 
-          }
-
-          this.$emit("order-status-updated");
-          alert("Order rejected successfully!");
-        } catch (error) {
-          console.error("Error rejecting order:", error);
-          alert("Failed to reject order. Please try again.");
+        await this.api.put(`/order/approved-rejected/${orderId}`, { status: "rejected" });
+        
+        const orderIndex = this.orders.findIndex(order => order.id === orderId);
+        if (orderIndex !== -1) {
+          this.orders[orderIndex].status = "rejected";
         }
+        
+        this.$emit("order-status-updated");
+        alert("Order rejected successfully!");
+      } catch (error) {
+        console.error("Error rejecting order:", error);
+        alert("Failed to reject order. Please try again.");
       }
+    },
+
+    handleAuthError() {
+      localStorage.removeItem('token');
+      this.error = 'Session expired. Please login again.';
+      this.$router.push('/');
+    },
+
+    getStatusClass(status) {
+      return {
+        'status-pending': status === 'pending',
+        'status-confirmed': status === 'approved',
+        'status-rejected': status === 'rejected'
+      };
     }
+  },
+
+  async created() {
+    await this.fetchOrders();
   }
 };
 </script>
@@ -221,7 +221,7 @@ td {
   border-bottom: 1px solid #ddd;
 }
 th {
-  background-color: #f4f4f4;
+  background-color: orange;
 }
 .confirm-btn {
   background-color: #f9a704;

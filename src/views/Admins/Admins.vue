@@ -88,18 +88,18 @@
 
     <v-main class="main-class">
       <v-container class="container">
-      <v-row justify="center">
-        <v-col cols="12">
-          <div v-if="selectedTab === 0"><Admins_chil /></div>
-          <div v-if="selectedTab === 1"><House_up /></div>
-          <div v-if="selectedTab === 2"><Allhouses /></div>
-          <div v-if="selectedTab === 3"><Employees /></div>
-          <div v-if="selectedTab === 4"><ManageEmployee /></div>
-          <div v-if="selectedTab === 5"><Addcategory /></div>
-          <div v-if="selectedTab === 6"><Userlogin /></div>
-          <div v-if="selectedTab === 7"><Comfrim /> </div>
-        </v-col>
-      </v-row>
+        <v-row justify="center">
+          <v-col cols="12">
+            <div v-if="selectedTab === 0"><Admins_chil /></div>
+            <div v-if="selectedTab === 1"><House_up /></div>
+            <div v-if="selectedTab === 2"><Allhouses /></div>
+            <div v-if="selectedTab === 3"><Employees /></div>
+            <div v-if="selectedTab === 4"><ManageEmployee /></div>
+            <div v-if="selectedTab === 5"><Addcategory /></div>
+            <div v-if="selectedTab === 6"><Userlogin /></div>
+            <div v-if="selectedTab === 7"><Comfrim /></div>
+          </v-col>
+        </v-row>
       </v-container>
     </v-main>
 
@@ -107,10 +107,9 @@
     <v-dialog v-model="dialog" max-width="400">
       <v-card class="text-center">
         <v-card-title class="headline">Confirm Logout</v-card-title>
-        <img src="/thinking.jpg" alt="" class="thinkings">
+        <img src="/thinking.jpg" alt="" class="thinkings" />
         <v-card-text>Are you sure you want to log out?</v-card-text>
         <v-card-actions>
-          
           <v-btn color="grey" text @click="dialog = false">NO</v-btn>
           <v-spacer></v-spacer>
           <v-btn color="primary" text @click="confirmLogout">YES</v-btn>
@@ -145,6 +144,7 @@ export default {
   },
   data: () => ({
     drawer: false,
+    selectedTab: parseInt(localStorage.getItem("selectedTab")) || 0,
     selectedTab: 0,
     isDropdownOpen: false,
     isEmployeeDropdownOpen: false,
@@ -152,7 +152,7 @@ export default {
     menuItems: [
       { title: "Dashboard", icon: "mdi-monitor-multiple", page: 0 },
       { title: "ເພີ່ມປະເພດເຮືອນ", icon: "mdi-buffer", page: 5 },
-      { title: "Comfirm Orders", icon: "mdi-clipboard-text", page: 7 },
+      { title: "ຢືນຢັນລາຍການ", icon: "mdi-clipboard-text", page: 7 },
     ],
     dropdownItems: [
       { title: "ເພີ່ມລາຍການແບບເຮືອນ", icon: "mdi-home", page: 1 },
@@ -176,16 +176,48 @@ export default {
     },
   },
 
+  created() {
+    // Restore the selected tab from localStorage
+    const savedTab = localStorage.getItem("selectedTab");
+    if (savedTab !== null) {
+      this.selectedTab = parseInt(savedTab);
+
+      // Auto-open the relevant dropdown based on the selected tab
+      if (this.dropdownItems.some((item) => item.page === this.selectedTab)) {
+        this.isDropdownOpen = true;
+      }
+      if (
+        this.employeeDropdownItems.some(
+          (item) => item.page === this.selectedTab
+        )
+      ) {
+        this.isEmployeeDropdownOpen = true;
+      }
+    }
+  },
+
   methods: {
+
     changePage(page) {
       this.selectedTab = page;
+      localStorage.setItem("selectedTab", page.toString());
     },
+
     toggleDropdown() {
       this.isDropdownOpen = !this.isDropdownOpen;
+      // Save dropdown state
+      localStorage.setItem("dropdownOpen", this.isDropdownOpen.toString());
     },
+
     toggleEmployeeDropdown() {
       this.isEmployeeDropdownOpen = !this.isEmployeeDropdownOpen;
+      // Save employee dropdown state
+      localStorage.setItem(
+        "employeeDropdownOpen",
+        this.isEmployeeDropdownOpen.toString()
+      );
     },
+
     confirmLogout() {
       Cookies.remove("token");
       localStorage.removeItem("token");
